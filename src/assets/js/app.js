@@ -1,43 +1,90 @@
-// I Did a Thing! - Main Application Logic
+// I Did a Thing! - Main Application Logic - Multiple Calendars Support
 
 class DidAThingApp {
     constructor() {
-        this.storageKey = 'didAThingData';
+        this.storageKey = 'didAThingCalendars';
         this.currentDate = new Date();
         this.displayDate = new Date();
-        this.data = this.loadData();
+        this.calendars = this.loadCalendars();
+        this.activeIndex = this.loadActiveIndex();
 
         this.init();
     }
 
     init() {
         this.setupEventListeners();
+        this.renderTabs();
         this.updateToggleButton();
         this.renderCalendar();
+        this.updateCalendarHeader();
     }
 
     // Data Management
-    loadData() {
+    loadCalendars() {
         try {
             const stored = localStorage.getItem(this.storageKey);
-            return stored ? JSON.parse(stored) : {};
+            if (stored) {
+                const data = JSON.parse(stored);
+                return data.calendars || this.getDefaultCalendars();
+            }
+            return this.getDefaultCalendars();
         } catch (e) {
-            console.error('Error loading data:', e);
-            return {};
+            console.error('Error loading calendars:', e);
+            return this.getDefaultCalendars();
         }
     }
 
-    saveData() {
+    loadActiveIndex() {
         try {
-            localStorage.setItem(this.storageKey, JSON.stringify(this.data));
+            const stored = localStorage.getItem(this.storageKey);
+            if (stored) {
+                const data = JSON.parse(stored);
+                return data.activeIndex || 0;
+            }
+            return 0;
         } catch (e) {
-            console.error('Error saving data:', e);
+            return 0;
         }
+    }
+
+    getDefaultCalendars() {
+        return [
+            {
+                name: "My Daily Thing",
+                color: "#28a745",
+                data: {}
+            }
+        ];
+    }
+
+    saveCalendars() {
+        try {
+            const dataToSave = {
+                calendars: this.calendars,
+                activeIndex: this.activeIndex
+            };
+            localStorage.setItem(this.storageKey, JSON.stringify(dataToSave));
+        } catch (e) {
+            console.error('Error saving calendars:', e);
+        }
+    }
+
+    getActiveCalendar() {
+        return this.calendars[this.activeIndex] || this.calendars[0];
+    }
+
+    // Utility Methods
+    generateRandomColor() {
+        return '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+    }
+
+    truncateText(text, maxLength = 15) {
+        return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
     }
 
     // Date Utilities
     getDateKey(date = this.currentDate) {
-        return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+        return date.toISOString().split('T')[0];
     }
 
     isToday(date) {
@@ -45,14 +92,17 @@ class DidAThingApp {
     }
 
     isDayCompleted(date) {
-        return this.data[this.getDateKey(date)] === true;
+        const activeCalendar = this.getActiveCalendar();
+        return activeCalendar.data[this.getDateKey(date)] === true;
     }
 
-    // Toggle Button Logic
+    // Event Listeners
     setupEventListeners() {
         const toggleButton = document.getElementById('toggleButton');
         const prevMonth = document.getElementById('prevMonth');
         const nextMonth = document.getElementById('nextMonth');
+        const addCalendarBtn = document.getElementById('addCalendarBtn');
+        const editCalendarBtn = document.getElementById('editCalendarBtn');
 
         if (toggleButton) {
             toggleButton.addEventListener('click', () => this.toggleToday());
@@ -65,22 +115,213 @@ class DidAThingApp {
         if (nextMonth) {
             nextMonth.addEventListener('click', () => this.changeMonth(1));
         }
+
+        if (addCalendarBtn) {
+            addCalendarBtn.addEventListener('click', () => this.openAddCalendarModal());
+        }
+
+        if (editCalendarBtn) {
+            editCalendarBtn.addEventListener('click', () => this.enableEditMode());
+        }
+
+        // Modal form submission
+        const addCalendarForm = document.getElementById('addCalendarForm');
+        if (addCalendarForm) {
+            addCalendarForm.addEventListener('submit', (e) => this.handleAddCalendar(e));
+        }
+
+        // Color picker synchronization
+        this.setupColorPickerSync();
     }
 
+    setupColorPickerSync() {
+        const colorPicker = document.getElementById('calendarColor');
+        const colorInput = document.getElementById('calendarColorText');
+
+        if (colorPicker && colorInput) {
+            colorPicker.addEventListener('input', (e) => {
+                colorInput.value = e.target.value.toUpperCase();
+            });
+
+            colorInput.addEventListener('input', (e) => {
+                const value = e.target.value;
+                if (/^#[0-9A-F]{6}$/i.test(value)) {
+                    colorPicker.value = value;
+                }
+            });
+        }
+    }
+
+    // Calendar Management
+    openAddCalendarModal() {
+        const modal = new bootstrap.Modal(document.getElementById('addCalendarModal'));
+        const randomColor = this.generateRandomColor();
+
+        // Set random color
+        document.getElementById('calendarColor').value = randomColor;
+        document.getElementById('calendarColorText').value = randomColor.toUpperCase();
+        document.getElementById('calendarName').value = '';
+
+        modal.show();
+    }
+
+    handleAddCalendar(e) {
+        e.preventDefault();
+
+        const name = document.getElementById('calendarName').value.trim();
+        const color = document.getElementById('calendarColor').value;
+
+        if (!name) {
+            alert('Please enter a calendar name.');
+            return;
+        }
+
+        const newCalendar = {
+            name: name,
+            color: color,
+            data: {}
+        };
+
+        this.calendars.push(newCalendar);
+        this.activeIndex = this.calendars.length - 1;
+        this.saveCalendars();
+
+        this.renderTabs();
+        this.updateToggleButton();
+        this.renderCalendar();
+        this.updateCalendarHeader();
+
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addCalendarModal'));
+        modal.hide();
+    }
+
+    switchToCalendar(index) {
+        this.activeIndex = index;
+        this.saveCalendars();
+
+        this.updateToggleButton();
+        this.renderCalendar();
+        this.updateCalendarHeader();
+        this.updateTabsActiveState();
+    }
+
+    enableEditMode() {
+        const calendarNameEl = document.getElementById('calendarName');
+        const editBtn = document.getElementById('editCalendarBtn');
+        const activeCalendar = this.getActiveCalendar();
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = activeCalendar.name;
+        input.className = 'form-control d-inline-block';
+        input.style.width = 'auto';
+        input.style.minWidth = '200px';
+
+        const saveEdit = () => {
+            const newName = input.value.trim();
+            if (newName && newName !== activeCalendar.name) {
+                activeCalendar.name = newName;
+                this.saveCalendars();
+                this.renderTabs();
+            }
+            calendarNameEl.textContent = activeCalendar.name;
+            editBtn.style.display = 'inline-block';
+        };
+
+        input.addEventListener('blur', saveEdit);
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                input.blur();
+            }
+        });
+
+        calendarNameEl.textContent = '';
+        calendarNameEl.appendChild(input);
+        editBtn.style.display = 'none';
+        input.focus();
+        input.select();
+    }
+
+    // UI Rendering
+    renderTabs() {
+        const tabsContainer = document.getElementById('calendarTabs');
+        if (!tabsContainer) return;
+
+        let tabsHTML = '<ul class="nav nav-tabs" role="tablist">';
+
+        this.calendars.forEach((calendar, index) => {
+            const isActive = index === this.activeIndex ? 'active' : '';
+            const truncatedName = this.truncateText(calendar.name);
+
+            tabsHTML += `
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link ${isActive}" 
+                            onclick="window.didAThingApp.switchToCalendar(${index})"
+                            type="button" role="tab">
+                        <span class="calendar-dot" style="background-color: ${calendar.color}"></span>
+                        ${truncatedName}
+                    </button>
+                </li>
+            `;
+        });
+
+        tabsHTML += `
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="addCalendarBtn" type="button">
+                    <i class="fas fa-plus"></i> Add Calendar
+                </button>
+            </li>
+        </ul>`;
+
+        tabsContainer.innerHTML = tabsHTML;
+
+        // Re-setup event listener for add button
+        const addBtn = document.getElementById('addCalendarBtn');
+        if (addBtn) {
+            addBtn.addEventListener('click', () => this.openAddCalendarModal());
+        }
+    }
+
+    updateTabsActiveState() {
+        const tabs = document.querySelectorAll('#calendarTabs .nav-link');
+        tabs.forEach((tab, index) => {
+            if (index === this.activeIndex) {
+                tab.classList.add('active');
+            } else {
+                tab.classList.remove('active');
+            }
+        });
+    }
+
+    updateCalendarHeader() {
+        const calendarNameEl = document.getElementById('calendarNameDisplay');
+        const activeCalendar = this.getActiveCalendar();
+
+        if (calendarNameEl) {
+            calendarNameEl.textContent = activeCalendar.name;
+        }
+
+        // Update CSS custom property for dot color
+        document.documentElement.style.setProperty('--calendar-color', activeCalendar.color);
+    }
+
+    // Toggle Button Logic
     toggleToday() {
         const todayKey = this.getDateKey();
         const toggleButton = document.getElementById('toggleButton');
+        const activeCalendar = this.getActiveCalendar();
 
-        // Toggle the state
-        this.data[todayKey] = !this.data[todayKey];
-        this.saveData();
+        // Toggle the state for active calendar
+        activeCalendar.data[todayKey] = !activeCalendar.data[todayKey];
+        this.saveCalendars();
 
         // Update UI
         this.updateToggleButton();
         this.renderCalendar();
 
         // Add bounce animation
-        if (this.data[todayKey]) {
+        if (activeCalendar.data[todayKey]) {
             toggleButton.classList.add('bounce');
             setTimeout(() => toggleButton.classList.remove('bounce'), 1000);
         }
@@ -174,28 +415,32 @@ class DidAThingApp {
         }
     }
 
-    // Utility Methods
+    // Statistics and utility methods
     getStats() {
-        const totalDays = Object.keys(this.data).length;
-        const completedDays = Object.values(this.data).filter(Boolean).length;
+        const activeCalendar = this.getActiveCalendar();
+        const totalDays = Object.keys(activeCalendar.data).length;
+        const completedDays = Object.values(activeCalendar.data).filter(Boolean).length;
         const completionRate = totalDays > 0 ? (completedDays / totalDays * 100).toFixed(1) : 0;
 
         return {
             totalDays,
             completedDays,
-            completionRate
+            completionRate,
+            calendarName: activeCalendar.name
         };
     }
 
     getCurrentStreak() {
+        const activeCalendar = this.getActiveCalendar();
         let streak = 0;
         const today = new Date();
 
-        for (let i = 0; i < 365; i++) { // Check up to a year back
+        for (let i = 0; i < 365; i++) {
             const checkDate = new Date(today);
             checkDate.setDate(today.getDate() - i);
+            const dateKey = this.getDateKey(checkDate);
 
-            if (this.isDayCompleted(checkDate)) {
+            if (activeCalendar.data[dateKey]) {
                 streak++;
             } else {
                 break;
@@ -208,8 +453,26 @@ class DidAThingApp {
     exportData() {
         return {
             exportDate: new Date().toISOString(),
-            data: this.data,
-            stats: this.getStats()
+            calendars: this.calendars,
+            activeIndex: this.activeIndex,
+            stats: this.calendars.map((cal, index) => ({
+                name: cal.name,
+                color: cal.color,
+                ...this.getStatsForCalendar(index)
+            }))
+        };
+    }
+
+    getStatsForCalendar(index) {
+        const calendar = this.calendars[index];
+        const totalDays = Object.keys(calendar.data).length;
+        const completedDays = Object.values(calendar.data).filter(Boolean).length;
+        const completionRate = totalDays > 0 ? (completedDays / totalDays * 100).toFixed(1) : 0;
+
+        return {
+            totalDays,
+            completedDays,
+            completionRate
         };
     }
 }

@@ -43,21 +43,49 @@
                     <h3 class="mb-0">How to Use the App</h3>
                 </div>
                 <div class="card-body">
+                    <h5>Managing Multiple Calendars</h5>
+                    <p>The app now supports multiple calendars, allowing you to track different habits or tasks independently. Each calendar has its own color, data, and completion status.</p>
+
+                    <h6>Adding a New Calendar</h6>
+                    <ul>
+                        <li>Click the "+ Add Calendar" button (appears as a tab next to your existing calendars)</li>
+                        <li>Enter a descriptive name for your new habit (e.g., "Exercise", "Reading", "Meditation")</li>
+                        <li>Choose a color for the completion dots - you can use the color picker or enter a hex code</li>
+                        <li>Click "Add Calendar" to create your new tracking calendar</li>
+                    </ul>
+
+                    <h6>Switching Between Calendars</h6>
+                    <p>Use the tabs above the calendar to switch between your different tracking calendars. Each tab shows:</p>
+                    <ul>
+                        <li>A colored dot representing the calendar's completion color</li>
+                        <li>The calendar name (truncated with "..." if too long)</li>
+                        <li>The active calendar is highlighted</li>
+                    </ul>
+
+                    <h6>Editing Calendar Names</h6>
+                    <p>Next to each calendar's name, you'll find an "Edit" button. Click it to:</p>
+                    <ul>
+                        <li>Change the calendar name in-place</li>
+                        <li>Press Enter or click away to save changes</li>
+                        <li>The tab name will update automatically</li>
+                    </ul>
+
                     <h5>Toggle the Daily Button</h5>
-                    <p>On the home page, you'll see a large circular button with "I did it!" text. Click this button to mark today as complete. When clicked, the button will display a beautiful animated rainbow border to celebrate your accomplishment!</p>
+                    <p>On the home page, you'll see a large circular button with "I did it!" text. Click this button to mark today as complete <strong>for the currently active calendar</strong>. When clicked, the button will display a beautiful animated rainbow border to celebrate your accomplishment!</p>
 
                     <h5>View Your Progress</h5>
-                    <p>Below the button, you'll find a calendar view showing your tracking history. Days when you completed your task are marked with green dots. You can navigate between months using the arrow buttons.</p>
+                    <p>Below the button, you'll find a calendar view showing your tracking history for the active calendar. Days when you completed your task are marked with colored dots matching your calendar's chosen color. You can navigate between months using the arrow buttons.</p>
 
                     <h5>Understanding the Calendar</h5>
                     <ul>
-                        <li><strong>Green dots:</strong> Days when you successfully did the thing</li>
+                        <li><strong>Colored dots:</strong> Days when you successfully did the thing (color matches the active calendar)</li>
                         <li><strong>No dot:</strong> Days when you didn't complete your task</li>
                         <li><strong>Today:</strong> Highlighted with a blue border</li>
+                        <li><strong>Each calendar is independent:</strong> Switching calendars shows different completion data</li>
                     </ul>
 
                     <h5>Data Storage</h5>
-                    <p>Your progress is automatically saved in your browser's local storage. This means your data persists between sessions, but it's only available on the device and browser you're using.</p>
+                    <p>Your progress for all calendars is automatically saved in your browser's local storage. This means your data persists between sessions, but it's only available on the device and browser you're using. Each calendar maintains its own separate tracking data.</p>
                 </div>
             </div>
 
@@ -67,22 +95,35 @@
                 </div>
                 <div class="card-body">
                     <p class="lead">This is a real-time tracking application to help ensure you do a daily thing each day.</p>
-                    <p>Whether it's drinking enough water, taking a walk, practicing gratitude, or any other daily habit you want to build, "I Did a Thing!" helps you stay consistent and visualize your progress over time.</p>
+                    <p>Whether it's drinking enough water, taking a walk, practicing gratitude, exercising, reading, or any other daily habits you want to build, "I Did a Thing!" helps you stay consistent and visualize your progress over time across multiple areas of your life.</p>
 
                     <div class="alert alert-info">
                         <h6 class="alert-heading">Pro Tips:</h6>
                         <ul class="mb-0">
-                            <li>Set a specific daily goal to track</li>
-                            <li>Check the app at the same time each day</li>
-                            <li>Celebrate your streaks and don't be too hard on yourself for missed days</li>
+                            <li>Create separate calendars for different types of habits (health, learning, personal development)</li>
+                            <li>Choose distinct colors for each calendar to easily distinguish your progress</li>
+                            <li>Use descriptive names for your calendars to stay motivated</li>
+                            <li>Check all your calendars at the same time each day</li>
+                            <li>Don't be too hard on yourself for missed days - focus on building consistency</li>
                             <li>The app works offline once loaded, so you can track anywhere!</li>
+                        </ul>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <h6 class="alert-heading">Multiple Calendar Features:</h6>
+                        <ul class="mb-0">
+                            <li><strong>Independent Tracking:</strong> Each calendar tracks its own data separately</li>
+                            <li><strong>Color Coding:</strong> Every calendar can have its own completion dot color</li>
+                            <li><strong>Easy Switching:</strong> Tabs make it simple to switch between different habits</li>
+                            <li><strong>Editable Names:</strong> Change calendar names anytime to keep them relevant</li>
+                            <li><strong>Persistent Storage:</strong> All your calendars and their data are saved locally</li>
                         </ul>
                     </div>
 
                     <!-- Space for more info later -->
                     <div class="mt-4">
                         <h6>Coming Soon:</h6>
-                        <p class="text-muted">Future updates may include streak counters, multiple habit tracking, and data export features.</p>
+                        <p class="text-muted">Future updates may include calendar deletion, streak counters per calendar, cross-calendar statistics, and data export features.</p>
                     </div>
                 </div>
             </div>
