@@ -1,0 +1,17 @@
+{
+  "name": "i-did-a-thing",
+  "version": "1.0.0",
+  "description": "A simple daily task tracking app",
+  "main": "index.js",
+  "scripts": {
+    "build": "eleventy",
+    "dev": "eleventy --serve",
+    "clean": "rm -rf docs"
+  },
+  "keywords": ["task-tracking", "daily-habits", "static-site"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@11ty/eleventy": "^2.0.1"
+  }
+}
