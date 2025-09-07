@@ -52,6 +52,7 @@ class DidAThingApp {
             {
                 name: "My Daily Thing",
                 color: "#28a745",
+                allowFutureDays: false,
                 data: {}
             }
         ];
@@ -91,6 +92,14 @@ class DidAThingApp {
         return this.getDateKey(date) === this.getDateKey(this.currentDate);
     }
 
+    isFutureDate(date) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const checkDate = new Date(date);
+        checkDate.setHours(0, 0, 0, 0);
+        return checkDate > today;
+    }
+
     isDayCompleted(date) {
         const activeCalendar = this.getActiveCalendar();
         return activeCalendar.data[this.getDateKey(date)] === true;
@@ -103,6 +112,7 @@ class DidAThingApp {
         const nextMonth = document.getElementById('nextMonth');
         const addCalendarBtn = document.getElementById('addCalendarBtn');
         const editCalendarBtn = document.getElementById('editCalendarBtn');
+        const goToTodayBtn = document.getElementById('goToTodayBtn');
 
         if (toggleButton) {
             toggleButton.addEventListener('click', () => this.toggleToday());
@@ -114,6 +124,10 @@ class DidAThingApp {
 
         if (nextMonth) {
             nextMonth.addEventListener('click', () => this.changeMonth(1));
+        }
+
+        if (goToTodayBtn) {
+            goToTodayBtn.addEventListener('click', () => this.goToToday());
         }
 
         if (addCalendarBtn) {
@@ -162,6 +176,7 @@ class DidAThingApp {
         document.getElementById('calendarColor').value = randomColor;
         document.getElementById('calendarColorText').value = randomColor.toUpperCase();
         document.getElementById('calendarName').value = '';
+        document.getElementById('allowFutureDays').checked = false; // Default to false
 
         // Update modal title and button text for adding
         document.getElementById('addCalendarModalLabel').textContent = 'Add New Calendar';
@@ -185,6 +200,7 @@ class DidAThingApp {
         document.getElementById('calendarColor').value = activeCalendar.color;
         document.getElementById('calendarColorText').value = activeCalendar.color.toUpperCase();
         document.getElementById('calendarName').value = activeCalendar.name;
+        document.getElementById('allowFutureDays').checked = activeCalendar.allowFutureDays || false;
 
         // Update modal title and button text for editing
         document.getElementById('addCalendarModalLabel').textContent = 'Edit Calendar';
@@ -210,6 +226,7 @@ class DidAThingApp {
         const form = document.getElementById('addCalendarForm');
         const name = document.getElementById('calendarName').value.trim();
         const color = document.getElementById('calendarColor').value;
+        const allowFutureDays = document.getElementById('allowFutureDays').checked;
         const editIndex = form.getAttribute('data-edit-index');
 
         if (!name) {
@@ -220,13 +237,22 @@ class DidAThingApp {
         if (editIndex !== null) {
             // Edit existing calendar
             const index = parseInt(editIndex);
+            const previousAllowFutureDays = this.calendars[index].allowFutureDays;
+
             this.calendars[index].name = name;
             this.calendars[index].color = color;
+            this.calendars[index].allowFutureDays = allowFutureDays;
+
+            // If future days were disabled, remove all future day data
+            if (previousAllowFutureDays && !allowFutureDays) {
+                this.removeFutureDayData(this.calendars[index]);
+            }
         } else {
             // Add new calendar
             const newCalendar = {
                 name: name,
                 color: color,
+                allowFutureDays: allowFutureDays,
                 data: {}
             };
 
@@ -244,6 +270,22 @@ class DidAThingApp {
         // Close modal
         const modal = bootstrap.Modal.getInstance(document.getElementById('addCalendarModal'));
         modal.hide();
+    }
+
+    removeFutureDayData(calendar) {
+        const today = new Date();
+        const keysToRemove = [];
+
+        for (const dateKey in calendar.data) {
+            const date = new Date(dateKey);
+            if (this.isFutureDate(date)) {
+                keysToRemove.push(dateKey);
+            }
+        }
+
+        keysToRemove.forEach(key => {
+            delete calendar.data[key];
+        });
     }
 
     switchToCalendar(index) {
@@ -527,12 +569,50 @@ class DidAThingApp {
         const activeCalendar = this.getActiveCalendar();
         const dateKey = this.getDateKey(date);
 
+        // Check if trying to mark a future day as done when not allowed
+        if (this.isFutureDate(date) && !activeCalendar.allowFutureDays && !activeCalendar.data[dateKey]) {
+            this.showFutureDayError();
+            return;
+        }
+
         // Toggle the state for the clicked day
         activeCalendar.data[dateKey] = !activeCalendar.data[dateKey];
         this.saveCalendars();
 
         // Update UI
         this.updateToggleButton();
+        this.renderCalendar();
+    }
+
+    showFutureDayError() {
+        // Remove any existing error message
+        const existingError = document.getElementById('futureDayError');
+        if (existingError) {
+            existingError.remove();
+        }
+
+        // Create error message
+        const errorDiv = document.createElement('div');
+        errorDiv.id = 'futureDayError';
+        errorDiv.className = 'alert alert-warning alert-dismissible fade show mt-3';
+        errorDiv.style.cssText = 'position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1050; min-width: 300px;';
+        errorDiv.innerHTML = `
+            <strong>Future Days Disabled:</strong> Marking future days as done feature is disabled. Edit calendar to enable feature.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+
+        document.body.appendChild(errorDiv);
+
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (errorDiv && errorDiv.parentNode) {
+                errorDiv.remove();
+            }
+        }, 5000);
+    }
+
+    goToToday() {
+        this.displayDate = new Date();
         this.renderCalendar();
     }
 
