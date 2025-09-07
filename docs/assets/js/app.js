@@ -121,7 +121,7 @@ class DidAThingApp {
         }
 
         if (editCalendarBtn) {
-            editCalendarBtn.addEventListener('click', () => this.enableEditMode());
+            editCalendarBtn.addEventListener('click', () => this.openEditCalendarModal());
         }
 
         // Modal form submission
@@ -157,10 +157,36 @@ class DidAThingApp {
         const modal = new bootstrap.Modal(document.getElementById('addCalendarModal'));
         const randomColor = this.generateRandomColor();
 
-        // Set random color
+        // Set random color for new calendars
         document.getElementById('calendarColor').value = randomColor;
         document.getElementById('calendarColorText').value = randomColor.toUpperCase();
         document.getElementById('calendarName').value = '';
+
+        // Update modal title and button text for adding
+        document.getElementById('addCalendarModalLabel').textContent = 'Add New Calendar';
+        document.querySelector('#addCalendarForm button[type="submit"]').textContent = 'Add Calendar';
+
+        // Clear edit mode flag
+        document.getElementById('addCalendarForm').removeAttribute('data-edit-index');
+
+        modal.show();
+    }
+
+    openEditCalendarModal() {
+        const modal = new bootstrap.Modal(document.getElementById('addCalendarModal'));
+        const activeCalendar = this.getActiveCalendar();
+
+        // Pre-fill with current calendar details
+        document.getElementById('calendarColor').value = activeCalendar.color;
+        document.getElementById('calendarColorText').value = activeCalendar.color.toUpperCase();
+        document.getElementById('calendarName').value = activeCalendar.name;
+
+        // Update modal title and button text for editing
+        document.getElementById('addCalendarModalLabel').textContent = 'Edit Calendar';
+        document.querySelector('#addCalendarForm button[type="submit"]').textContent = 'Save Changes';
+
+        // Set edit mode flag with the current calendar index
+        document.getElementById('addCalendarForm').setAttribute('data-edit-index', this.activeIndex);
 
         modal.show();
     }
@@ -168,22 +194,33 @@ class DidAThingApp {
     handleAddCalendar(e) {
         e.preventDefault();
 
+        const form = document.getElementById('addCalendarForm');
         const name = document.getElementById('calendarName').value.trim();
         const color = document.getElementById('calendarColor').value;
+        const editIndex = form.getAttribute('data-edit-index');
 
         if (!name) {
             alert('Please enter a calendar name.');
             return;
         }
 
-        const newCalendar = {
-            name: name,
-            color: color,
-            data: {}
-        };
+        if (editIndex !== null) {
+            // Edit existing calendar
+            const index = parseInt(editIndex);
+            this.calendars[index].name = name;
+            this.calendars[index].color = color;
+        } else {
+            // Add new calendar
+            const newCalendar = {
+                name: name,
+                color: color,
+                data: {}
+            };
 
-        this.calendars.push(newCalendar);
-        this.activeIndex = this.calendars.length - 1;
+            this.calendars.push(newCalendar);
+            this.activeIndex = this.calendars.length - 1;
+        }
+
         this.saveCalendars();
 
         this.renderTabs();
