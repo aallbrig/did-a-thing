@@ -302,11 +302,62 @@ class DidAThingApp {
             calendarNameEl.textContent = activeCalendar.name;
         }
 
-        // Update CSS custom property for dot color
-        document.documentElement.style.setProperty('--calendar-color', activeCalendar.color);
+        // Update CSS custom properties for dynamic theming
+        this.updateAppTheme(activeCalendar.color);
     }
 
-    // Toggle Button Logic
+    updateAppTheme(color) {
+        // Set CSS custom properties for dynamic theming
+        document.documentElement.style.setProperty('--calendar-color', color);
+        document.documentElement.style.setProperty('--primary-color', color);
+
+        // Calculate lighter and darker variants of the color
+        const lighterColor = this.lightenColor(color, 0.1);
+        const darkerColor = this.darkenColor(color, 0.1);
+        const veryLightColor = this.lightenColor(color, 0.4);
+
+        document.documentElement.style.setProperty('--primary-light', lighterColor);
+        document.documentElement.style.setProperty('--primary-dark', darkerColor);
+        document.documentElement.style.setProperty('--primary-very-light', veryLightColor);
+    }
+
+    // Color manipulation utilities
+    hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    }
+
+    rgbToHex(r, g, b) {
+        return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    }
+
+    lightenColor(hex, percent) {
+        const rgb = this.hexToRgb(hex);
+        if (!rgb) return hex;
+
+        const r = Math.min(255, Math.round(rgb.r + (255 - rgb.r) * percent));
+        const g = Math.min(255, Math.round(rgb.g + (255 - rgb.g) * percent));
+        const b = Math.min(255, Math.round(rgb.b + (255 - rgb.b) * percent));
+
+        return this.rgbToHex(r, g, b);
+    }
+
+    darkenColor(hex, percent) {
+        const rgb = this.hexToRgb(hex);
+        if (!rgb) return hex;
+
+        const r = Math.max(0, Math.round(rgb.r * (1 - percent)));
+        const g = Math.max(0, Math.round(rgb.g * (1 - percent)));
+        const b = Math.max(0, Math.round(rgb.b * (1 - percent)));
+
+        return this.rgbToHex(r, g, b);
+    }
+
+    // Calendar Logic
     toggleToday() {
         const todayKey = this.getDateKey();
         const toggleButton = document.getElementById('toggleButton');
