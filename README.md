@@ -1,5 +1,8 @@
 # I Did a Thing! 🎉
 
+QA: https://aallbrig.github.io/did-a-thing/
+PROD: 
+
 A simple, beautiful daily task tracking app to help you build consistent habits and celebrate your daily accomplishments.
 
 ## ✨ Features
