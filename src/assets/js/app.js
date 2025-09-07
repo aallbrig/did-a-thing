@@ -103,7 +103,6 @@ class DidAThingApp {
         const nextMonth = document.getElementById('nextMonth');
         const addCalendarBtn = document.getElementById('addCalendarBtn');
         const editCalendarBtn = document.getElementById('editCalendarBtn');
-        const deleteCalendarBtn = document.getElementById('deleteCalendarBtn');
 
         if (toggleButton) {
             toggleButton.addEventListener('click', () => this.toggleToday());
@@ -123,10 +122,6 @@ class DidAThingApp {
 
         if (editCalendarBtn) {
             editCalendarBtn.addEventListener('click', () => this.openEditCalendarModal());
-        }
-
-        if (deleteCalendarBtn) {
-            deleteCalendarBtn.addEventListener('click', () => this.deleteCalendar());
         }
 
         // Modal form submission
@@ -161,6 +156,7 @@ class DidAThingApp {
     openAddCalendarModal() {
         const modal = new bootstrap.Modal(document.getElementById('addCalendarModal'));
         const randomColor = this.generateRandomColor();
+        const deleteBtn = document.getElementById('deleteCalendarBtn');
 
         // Set random color for new calendars
         document.getElementById('calendarColor').value = randomColor;
@@ -171,6 +167,9 @@ class DidAThingApp {
         document.getElementById('addCalendarModalLabel').textContent = 'Add New Calendar';
         document.querySelector('#addCalendarForm button[type="submit"]').textContent = 'Add Calendar';
 
+        // Hide delete button for new calendars
+        deleteBtn.style.display = 'none';
+
         // Clear edit mode flag
         document.getElementById('addCalendarForm').removeAttribute('data-edit-index');
 
@@ -180,6 +179,7 @@ class DidAThingApp {
     openEditCalendarModal() {
         const modal = new bootstrap.Modal(document.getElementById('addCalendarModal'));
         const activeCalendar = this.getActiveCalendar();
+        const deleteBtn = document.getElementById('deleteCalendarBtn');
 
         // Pre-fill with current calendar details
         document.getElementById('calendarColor').value = activeCalendar.color;
@@ -189,6 +189,14 @@ class DidAThingApp {
         // Update modal title and button text for editing
         document.getElementById('addCalendarModalLabel').textContent = 'Edit Calendar';
         document.querySelector('#addCalendarForm button[type="submit"]').textContent = 'Save Changes';
+
+        // Show delete button and set up its event listener
+        deleteBtn.style.display = 'inline-block';
+        deleteBtn.onclick = () => {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addCalendarModal'));
+            modal.hide();
+            this.deleteCalendar();
+        };
 
         // Set edit mode flag with the current calendar index
         document.getElementById('addCalendarForm').setAttribute('data-edit-index', this.activeIndex);
@@ -528,7 +536,7 @@ class DidAThingApp {
         this.renderCalendar();
     }
 
-    // New method to calculate and display stats
+    // Enhanced method to calculate and display comprehensive stats
     updateStats() {
         const statsContainer = document.getElementById('statsContainer');
         if (!statsContainer) return;
@@ -536,62 +544,153 @@ class DidAThingApp {
         const activeCalendar = this.getActiveCalendar();
         const today = new Date();
 
-        // Calculate 7-day stats
-        let completed7Days = 0;
-        let total7Days = 0;
-        for (let i = 0; i < 7; i++) {
-            const date = new Date(today);
-            date.setDate(today.getDate() - i);
-            const dateKey = this.getDateKey(date);
-            total7Days++;
-            if (activeCalendar.data[dateKey]) {
-                completed7Days++;
+        // Get all dates with data and find calendar start date
+        const allDates = Object.keys(activeCalendar.data).sort();
+        const startDate = allDates.length > 0 ? new Date(allDates[0]) : today;
+        const daysSinceStart = Math.floor((today - startDate) / (1000 * 60 * 60 * 24)) + 1;
+
+        // Calculate total completions since start
+        const totalCompletions = Object.values(activeCalendar.data).filter(Boolean).length;
+        const overallPercentage = daysSinceStart > 0 ? Math.round((totalCompletions / daysSinceStart) * 100) : 0;
+
+        // Calculate longest streak
+        const longestStreak = this.calculateLongestStreak(activeCalendar);
+
+        // Calculate 7-day stats (only if we have 7+ days of data)
+        let stats7Day = null;
+        if (daysSinceStart >= 7) {
+            let completed7Days = 0;
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(today);
+                date.setDate(today.getDate() - i);
+                const dateKey = this.getDateKey(date);
+                if (activeCalendar.data[dateKey]) {
+                    completed7Days++;
+                }
             }
+            stats7Day = Math.round((completed7Days / 7) * 100);
         }
 
-        // Calculate 30-day stats
-        let completed30Days = 0;
-        let total30Days = 0;
-        for (let i = 0; i < 30; i++) {
-            const date = new Date(today);
-            date.setDate(today.getDate() - i);
-            const dateKey = this.getDateKey(date);
-            total30Days++;
-            if (activeCalendar.data[dateKey]) {
-                completed30Days++;
+        // Calculate 30-day stats (only if we have 30+ days of data)
+        let stats30Day = null;
+        if (daysSinceStart >= 30) {
+            let completed30Days = 0;
+            for (let i = 0; i < 30; i++) {
+                const date = new Date(today);
+                date.setDate(today.getDate() - i);
+                const dateKey = this.getDateKey(date);
+                if (activeCalendar.data[dateKey]) {
+                    completed30Days++;
+                }
             }
+            stats30Day = Math.round((completed30Days / 30) * 100);
         }
 
-        const percentage7Days = total7Days > 0 ? Math.round((completed7Days / total7Days) * 100) : 0;
-        const percentage30Days = total30Days > 0 ? Math.round((completed30Days / total30Days) * 100) : 0;
+        // Format start date
+        const startDateStr = startDate.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
 
-        // Generate encouraging messages
-        const getMessage = (percentage, period) => {
-            if (percentage >= 80) return `Fantastic! You're crushing it with ${percentage}% completion!`;
-            if (percentage >= 60) return `Great job! You've completed ${percentage}% of tasks!`;
-            if (percentage >= 40) return `Good progress! You're at ${percentage}% completion.`;
-            if (percentage >= 20) return `Keep going! You've completed ${percentage}% of tasks.`;
-            return `Every step counts! You're at ${percentage}% - you've got this!`;
-        };
-
-        statsContainer.innerHTML = `
-            <h5 class="text-center mb-3" style="color: var(--primary-color);">Your Progress</h5>
+        let statsHTML = `
+            <h5 class="text-center mb-3">Your Progress</h5>
             <div class="stats-grid">
                 <div class="stat-card">
-                    <span class="stat-number">${percentage7Days}%</span>
-                    <div class="stat-label">Last 7 Days</div>
-                    <div class="stat-message">${getMessage(percentage7Days, '7 days')}</div>
+                    <span class="stat-number">${longestStreak}</span>
+                    <div class="stat-label">Longest Streak</div>
+                    <div class="stat-message">${longestStreak > 0 ? `Amazing ${longestStreak} day${longestStreak !== 1 ? 's' : ''} in a row!` : 'Start your streak today!'}</div>
                 </div>
+                
                 <div class="stat-card">
-                    <span class="stat-number">${percentage30Days}%</span>
+                    <span class="stat-number">${overallPercentage}%</span>
+                    <div class="stat-label">Overall Success</div>
+                    <div class="stat-message">Since ${startDateStr}</div>
+                </div>`;
+
+        // Add 7-day stat
+        if (stats7Day !== null) {
+            statsHTML += `
+                <div class="stat-card">
+                    <span class="stat-number">${stats7Day}%</span>
+                    <div class="stat-label">Last 7 Days</div>
+                    <div class="stat-message">${this.getEncouragingMessage(stats7Day)}</div>
+                </div>`;
+        } else {
+            statsHTML += `
+                <div class="stat-card collecting-data">
+                    <span class="stat-number">Collecting Data</span>
+                    <div class="stat-label">Last 7 Days</div>
+                    <div class="stat-message">Need ${7 - daysSinceStart} more day${(7 - daysSinceStart) !== 1 ? 's' : ''}</div>
+                </div>`;
+        }
+
+        // Add 30-day stat
+        if (stats30Day !== null) {
+            statsHTML += `
+                <div class="stat-card">
+                    <span class="stat-number">${stats30Day}%</span>
                     <div class="stat-label">Last 30 Days</div>
-                    <div class="stat-message">${getMessage(percentage30Days, '30 days')}</div>
-                </div>
-            </div>
-        `;
+                    <div class="stat-message">${this.getEncouragingMessage(stats30Day)}</div>
+                </div>`;
+        } else {
+            statsHTML += `
+                <div class="stat-card collecting-data">
+                    <span class="stat-number">Collecting Data</span>
+                    <div class="stat-label">Last 30 Days</div>
+                    <div class="stat-message">Need ${30 - daysSinceStart} more day${(30 - daysSinceStart) !== 1 ? 's' : ''}</div>
+                </div>`;
+        }
+
+        statsHTML += '</div>';
+        statsContainer.innerHTML = statsHTML;
     }
 
-    // New method to delete a calendar
+    // Helper method to calculate longest streak
+    calculateLongestStreak(calendar) {
+        const allDates = Object.keys(calendar.data).sort();
+        if (allDates.length === 0) return 0;
+
+        let longestStreak = 0;
+        let currentStreak = 0;
+        let previousDate = null;
+
+        for (const dateStr of allDates) {
+            const currentDate = new Date(dateStr);
+
+            if (calendar.data[dateStr]) {
+                if (previousDate === null || this.isConsecutiveDay(previousDate, currentDate)) {
+                    currentStreak++;
+                } else {
+                    currentStreak = 1;
+                }
+                longestStreak = Math.max(longestStreak, currentStreak);
+            } else {
+                currentStreak = 0;
+            }
+
+            previousDate = currentDate;
+        }
+
+        return longestStreak;
+    }
+
+    // Helper method to check if dates are consecutive
+    isConsecutiveDay(date1, date2) {
+        const oneDay = 1000 * 60 * 60 * 24;
+        return Math.abs(date2 - date1) === oneDay;
+    }
+
+    // Helper method for encouraging messages
+    getEncouragingMessage(percentage) {
+        if (percentage >= 80) return `Fantastic! You're crushing it!`;
+        if (percentage >= 60) return `Great job! Keep it up!`;
+        if (percentage >= 40) return `Good progress! You're building the habit!`;
+        if (percentage >= 20) return `Keep going! Every day counts!`;
+        return `You've got this! Start strong!`;
+    }
+
+    // Calendar Logic
     deleteCalendar() {
         if (this.calendars.length <= 1) {
             alert('You cannot delete the last remaining calendar.');
