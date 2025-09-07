@@ -103,6 +103,7 @@ class DidAThingApp {
         const nextMonth = document.getElementById('nextMonth');
         const addCalendarBtn = document.getElementById('addCalendarBtn');
         const editCalendarBtn = document.getElementById('editCalendarBtn');
+        const deleteCalendarBtn = document.getElementById('deleteCalendarBtn');
 
         if (toggleButton) {
             toggleButton.addEventListener('click', () => this.toggleToday());
@@ -122,6 +123,10 @@ class DidAThingApp {
 
         if (editCalendarBtn) {
             editCalendarBtn.addEventListener('click', () => this.openEditCalendarModal());
+        }
+
+        if (deleteCalendarBtn) {
+            deleteCalendarBtn.addEventListener('click', () => this.deleteCalendar());
         }
 
         // Modal form submission
@@ -490,6 +495,9 @@ class DidAThingApp {
                 dayElement.classList.add('completed');
             }
 
+            // Add click event listener for toggling days
+            dayElement.addEventListener('click', () => this.toggleDay(currentDay));
+
             calendar.appendChild(dayElement);
         }
 
@@ -501,67 +509,115 @@ class DidAThingApp {
             emptyDay.className = 'calendar-day other-month';
             calendar.appendChild(emptyDay);
         }
+
+        // Update stats after rendering calendar
+        this.updateStats();
     }
 
-    // Statistics and utility methods
-    getStats() {
+    // New method to toggle any day on the calendar
+    toggleDay(date) {
         const activeCalendar = this.getActiveCalendar();
-        const totalDays = Object.keys(activeCalendar.data).length;
-        const completedDays = Object.values(activeCalendar.data).filter(Boolean).length;
-        const completionRate = totalDays > 0 ? (completedDays / totalDays * 100).toFixed(1) : 0;
+        const dateKey = this.getDateKey(date);
 
-        return {
-            totalDays,
-            completedDays,
-            completionRate,
-            calendarName: activeCalendar.name
-        };
+        // Toggle the state for the clicked day
+        activeCalendar.data[dateKey] = !activeCalendar.data[dateKey];
+        this.saveCalendars();
+
+        // Update UI
+        this.updateToggleButton();
+        this.renderCalendar();
     }
 
-    getCurrentStreak() {
+    // New method to calculate and display stats
+    updateStats() {
+        const statsContainer = document.getElementById('statsContainer');
+        if (!statsContainer) return;
+
         const activeCalendar = this.getActiveCalendar();
-        let streak = 0;
         const today = new Date();
 
-        for (let i = 0; i < 365; i++) {
-            const checkDate = new Date(today);
-            checkDate.setDate(today.getDate() - i);
-            const dateKey = this.getDateKey(checkDate);
-
+        // Calculate 7-day stats
+        let completed7Days = 0;
+        let total7Days = 0;
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(today);
+            date.setDate(today.getDate() - i);
+            const dateKey = this.getDateKey(date);
+            total7Days++;
             if (activeCalendar.data[dateKey]) {
-                streak++;
-            } else {
-                break;
+                completed7Days++;
             }
         }
 
-        return streak;
+        // Calculate 30-day stats
+        let completed30Days = 0;
+        let total30Days = 0;
+        for (let i = 0; i < 30; i++) {
+            const date = new Date(today);
+            date.setDate(today.getDate() - i);
+            const dateKey = this.getDateKey(date);
+            total30Days++;
+            if (activeCalendar.data[dateKey]) {
+                completed30Days++;
+            }
+        }
+
+        const percentage7Days = total7Days > 0 ? Math.round((completed7Days / total7Days) * 100) : 0;
+        const percentage30Days = total30Days > 0 ? Math.round((completed30Days / total30Days) * 100) : 0;
+
+        // Generate encouraging messages
+        const getMessage = (percentage, period) => {
+            if (percentage >= 80) return `Fantastic! You're crushing it with ${percentage}% completion!`;
+            if (percentage >= 60) return `Great job! You've completed ${percentage}% of tasks!`;
+            if (percentage >= 40) return `Good progress! You're at ${percentage}% completion.`;
+            if (percentage >= 20) return `Keep going! You've completed ${percentage}% of tasks.`;
+            return `Every step counts! You're at ${percentage}% - you've got this!`;
+        };
+
+        statsContainer.innerHTML = `
+            <h5 class="text-center mb-3" style="color: var(--primary-color);">Your Progress</h5>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-number">${percentage7Days}%</span>
+                    <div class="stat-label">Last 7 Days</div>
+                    <div class="stat-message">${getMessage(percentage7Days, '7 days')}</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">${percentage30Days}%</span>
+                    <div class="stat-label">Last 30 Days</div>
+                    <div class="stat-message">${getMessage(percentage30Days, '30 days')}</div>
+                </div>
+            </div>
+        `;
     }
 
-    exportData() {
-        return {
-            exportDate: new Date().toISOString(),
-            calendars: this.calendars,
-            activeIndex: this.activeIndex,
-            stats: this.calendars.map((cal, index) => ({
-                name: cal.name,
-                color: cal.color,
-                ...this.getStatsForCalendar(index)
-            }))
-        };
-    }
+    // New method to delete a calendar
+    deleteCalendar() {
+        if (this.calendars.length <= 1) {
+            alert('You cannot delete the last remaining calendar.');
+            return;
+        }
 
-    getStatsForCalendar(index) {
-        const calendar = this.calendars[index];
-        const totalDays = Object.keys(calendar.data).length;
-        const completedDays = Object.values(calendar.data).filter(Boolean).length;
-        const completionRate = totalDays > 0 ? (completedDays / totalDays * 100).toFixed(1) : 0;
+        const activeCalendar = this.getActiveCalendar();
+        const confirmMessage = `Are you sure you want to delete the calendar "${activeCalendar.name}"? This action cannot be undone.`;
 
-        return {
-            totalDays,
-            completedDays,
-            completionRate
-        };
+        if (confirm(confirmMessage)) {
+            // Remove the calendar
+            this.calendars.splice(this.activeIndex, 1);
+
+            // Switch to the first calendar or adjust active index
+            if (this.activeIndex >= this.calendars.length) {
+                this.activeIndex = this.calendars.length - 1;
+            }
+
+            this.saveCalendars();
+
+            // Update UI
+            this.renderTabs();
+            this.updateToggleButton();
+            this.renderCalendar();
+            this.updateCalendarHeader();
+        }
     }
 }
 
