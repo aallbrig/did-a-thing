@@ -1,4 +1,4 @@
-# Contributing to I Did a Thing!
+# Contributing to Routine Mark
 
 Thank you for your interest in contributing to this project! This guide will help you get started with development.
 
@@ -13,8 +13,8 @@ Thank you for your interest in contributing to this project! This guide will hel
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/i-did-a-thing.git
-   cd i-did-a-thing
+   git clone https://github.com/aallbrig/routine-mark.git
+   cd routine-mark
    ```
 
 2. **Install dependencies**

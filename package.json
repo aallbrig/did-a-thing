@@ -1,7 +1,7 @@
 {
-  "name": "i-did-a-thing",
+  "name": "routine-mark",
   "version": "1.0.0",
-  "description": "A simple daily task tracking app",
+  "description": "A simple daily routine tracking app",
   "main": "index.js",
   "scripts": {
     "build": "eleventy",

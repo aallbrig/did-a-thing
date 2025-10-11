@@ -1,14 +1,14 @@
-# I Did a Thing! 🎉
+# Routine Mark 📊
 
-QA: https://aallbrig.github.io/did-a-thing/
+QA: https://aallbrig.github.io/routine-mark/
 PROD: 
 
-A simple, beautiful daily task tracking app to help you build consistent habits and celebrate your daily accomplishments.
+A simple, beautiful daily routine tracking app to help you build consistent habits and celebrate your daily accomplishments.
 
 ## ✨ Features
 
 - **One-Click Tracking**: Large, satisfying toggle button to mark today as complete
-- **Animated Feedback**: Beautiful rainbow border animation when you complete your daily task
+- **Animated Feedback**: Beautiful rainbow border animation when you complete your daily routine
 - **Visual Progress**: Calendar view with green dots showing your completion history
 - **Offline Ready**: Works offline after first load using service worker and localStorage
 - **Mobile Friendly**: Responsive design that works great on all devices
@@ -17,7 +17,7 @@ A simple, beautiful daily task tracking app to help you build consistent habits 
 ## 🚀 Quick Start
 
 ### For Users
-1. Visit the live site: [https://yourusername.github.io/i-did-a-thing](https://yourusername.github.io/i-did-a-thing)
+1. Visit the live site: [https://aallbrig.github.io/routine-mark](https://aallbrig.github.io/routine-mark)
 2. Click the "I did it!" button to mark today as complete
 3. View your progress in the calendar below
 4. Check out the User Manual for detailed instructions
@@ -31,8 +31,8 @@ A simple, beautiful daily task tracking app to help you build consistent habits 
 #### Setup
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/i-did-a-thing.git
-cd i-did-a-thing
+git clone https://github.com/aallbrig/routine-mark.git
+cd routine-mark
 
 # Install dependencies
 npm install
@@ -86,7 +86,7 @@ docs/                      # Built static files (GitHub Pages ready)
 ### GitHub Pages (Automatic)
 1. Push to `main` branch
 2. GitHub Actions automatically builds and deploys
-3. Site available at `https://yourusername.github.io/i-did-a-thing`
+3. Site available at `https://aallbrig.github.io/routine-mark`
 
 ### Manual Deployment
 ```bash

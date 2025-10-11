@@ -1,4 +1,4 @@
-const CACHE_NAME = 'i-did-a-thing-v1';
+const CACHE_NAME = 'routine-mark-v1';
 const urlsToCache = [
   '/',
   '/manual/',
